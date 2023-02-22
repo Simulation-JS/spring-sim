@@ -4,7 +4,11 @@
     "build": "vite build"
   },
   "dependencies": {
-    "vite": "^4.1.4",
-    "simulationjs": "^3.0.10"
+    "simulationjs": "^3.0.10",
+    "uuid": "^9.0.0",
+    "vite": "^4.1.4"
+  },
+  "devDependencies": {
+    "@types/uuid": "^9.0.1"
   }
 }

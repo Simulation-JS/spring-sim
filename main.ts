@@ -1,4 +1,5 @@
 import { Simulation, Circle, Vector, Line, Color, frameLoop, distance } from 'simulationjs';
+import { v4 as uuid } from 'uuid';
 
 const canvas = new Simulation('canvas');
 canvas.fitElement();
@@ -14,11 +15,15 @@ class PhysicsCircle extends Circle {
 
 const fps = 60;
 const forceDampen = 12;
+const circleGap = 120;
+const circleRadius = 6;
+const circleMass = 0.5;
 let g = 9.8;
 let springLength = 80;
 let springConstant = 4;
 let currentDragging = 0;
 let stationaryPoints = new Set([0]);
+let numCircles = 10;
 
 const updateFunctions = {
   updateSpringConstant: (val: string) => {
@@ -33,15 +38,36 @@ const updateFunctions = {
   resetCircles: () => {
     stationaryPoints = new Set([0]);
     canvas.empty();
-    circles = generatePoints(new Vector(800, 250), 12, 0.5);
-    for (let i = 0; i < circles.length; i++) canvas.add(circles[i]);
+    circles = generatePoints(new Vector(800, 250), numCircles);
+    for (let i = 0; i < circles.length; i++) canvas.add(circles[i], uuid());
+  },
+  updateNumCircles: (val: string) => {
+    let num = +val;
+    while (num > numCircles) {
+      const circle = new PhysicsCircle(
+        circleMass,
+        circles[circles.length - 1].pos.clone().appendY(circleGap),
+        circleRadius
+      );
+      circles.push(circle);
+      canvas.add(circle, uuid());
+      numCircles++;
+    }
+    if (num < numCircles) {
+      numCircles = num;
+      const removed = circles.splice(numCircles);
+      for (const circle of removed) {
+        canvas.removeWithId(circle.id);
+      }
+    }
   }
 };
 
 const defaultValues = {
   k: springConstant,
   length: springLength,
-  g
+  g,
+  numCircles
 };
 
 applyDefaultValues(defaultValues);
@@ -59,14 +85,15 @@ function applyDefaultValues<T extends { [key: string]: number }>(vals: T) {
   });
 }
 
-let circles = generatePoints(new Vector(800, 250), 12, 0.5);
-for (let i = 0; i < circles.length; i++) canvas.add(circles[i]);
+let circles = generatePoints(new Vector(800, 250), numCircles);
+for (let i = 0; i < circles.length; i++) canvas.add(circles[i], uuid());
 
 let dragging = false;
 canvas.on('mousedown', (e: MouseEvent) => {
   const p = new Vector(e.offsetX * canvas.ratio, e.offsetY * canvas.ratio);
   currentDragging = getClosestPointIndex(p);
   if (pressingShift) {
+    if (currentDragging === 0) return;
     if (stationaryPoints.has(currentDragging)) {
       stationaryPoints.delete(currentDragging);
       currentDragging = 0;
@@ -180,12 +207,10 @@ function drawLines(circles: PhysicsCircle[]) {
   }
 }
 
-function generatePoints(pos: Vector, num: number, mass: number) {
+function generatePoints(pos: Vector, num: number) {
   let res: PhysicsCircle[] = [];
-  const radius = 6;
-  const gap = 160;
   for (let i = 0; i < num; i++) {
-    res.push(new PhysicsCircle(mass, new Vector(pos.x, i * gap + pos.y), radius));
+    res.push(new PhysicsCircle(circleMass, new Vector(pos.x, i * circleGap + pos.y), circleRadius));
   }
   return res;
 }
