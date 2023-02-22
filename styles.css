@@ -20,3 +20,40 @@ body {
     right: 10px;
     text-align: right;
 }
+
+#controls {
+    position: absolute;
+    z-index: 1;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+#controls button {
+    margin-top: 6px;
+    border: none;
+    background: rgba(0, 123, 255, 0.15);
+    color: #007bff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.15s;
+    padding: 6px;
+}
+
+#controls button:hover {
+    background: rgba(0, 123, 255, 0.25);
+}
+
+#controls button:active {
+    background: rgba(0, 123, 255, 0.35);
+}
+
+code {
+    background: rgb(211, 211, 211);
+    padding: 0 4px 0 4px;
+    border-radius: 4px;
+}

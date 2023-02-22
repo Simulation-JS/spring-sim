@@ -22,10 +22,42 @@
       src="main.ts"
     ></script>
     <canvas id="canvas"></canvas>
+    <div id="controls">
+      <label for="k">Spring Constant</label>
+      <input
+        id="k"
+        type="range"
+        min="0.01"
+        step="0.01"
+        max="20"
+        oninput="updateSpringConstant(this.value)"
+      />
+      <label for="length">Spring Length</label>
+      <input
+        id="length"
+        type="range"
+        min="1"
+        step="1"
+        max="200"
+        oninput="updateSpringLength(this.value)"
+      />
+      <label for="g">Gravity</label>
+      <input
+        id="g"
+        type="range"
+        min="0"
+        max="50"
+        step="1"
+        oninput="updateGravity(this.value)"
+      />
+      <button onclick="resetCircles()">Reset</button>
+    </div>
     <div id="info">
       By Jackson Otto
       <br />
       Click and drag to move the point closest to the mouse
+      <br />
+      Hold <code>Shift</code> and click to lock the position of points
     </div>
   </body>
 </html>

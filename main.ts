@@ -12,34 +12,82 @@ class PhysicsCircle extends Circle {
   }
 }
 
-const g = 9.8;
 const fps = 60;
-const springLength = 80;
-const springConstant = 4;
 const forceDampen = 12;
+let g = 9.8;
+let springLength = 80;
+let springConstant = 4;
 let currentDragging = 0;
+let stationaryPoints = new Set([0]);
 
-const circles = generatePoints(new Vector(800, 250), 12, 0.5);
+const updateFunctions = {
+  updateSpringConstant: (val: string) => {
+    springConstant = +val;
+  },
+  updateSpringLength: (val: string) => {
+    springLength = +val;
+  },
+  updateGravity: (val: string) => {
+    g = +val;
+  },
+  resetCircles: () => {
+    stationaryPoints = new Set([0]);
+    canvas.empty();
+    circles = generatePoints(new Vector(800, 250), 12, 0.5);
+    for (let i = 0; i < circles.length; i++) canvas.add(circles[i]);
+  }
+};
+
+const defaultValues = {
+  k: springConstant,
+  length: springLength,
+  g
+};
+
+applyDefaultValues(defaultValues);
+applyFunctionsToWindow(updateFunctions);
+
+function applyFunctionsToWindow<T extends { [key: string]: Function }>(funcs: T) {
+  Object.keys(funcs).forEach((func) => {
+    (window as any)[func] = funcs[func];
+  });
+}
+
+function applyDefaultValues<T extends { [key: string]: number }>(vals: T) {
+  Object.keys(vals).forEach((val) => {
+    (document.getElementById(val) as HTMLInputElement).value = vals[val] + '';
+  });
+}
+
+let circles = generatePoints(new Vector(800, 250), 12, 0.5);
 for (let i = 0; i < circles.length; i++) canvas.add(circles[i]);
 
 let dragging = false;
 canvas.on('mousedown', (e: MouseEvent) => {
-  dragging = true;
   const p = new Vector(e.offsetX * canvas.ratio, e.offsetY * canvas.ratio);
-  for (let i = 0; i < circles.length; i++) {
-    if (distance(circles[i].pos, p) < distance(circles[currentDragging].pos, p)) {
-      currentDragging = i;
+  currentDragging = getClosestPointIndex(p);
+  if (pressingShift) {
+    if (stationaryPoints.has(currentDragging)) {
+      stationaryPoints.delete(currentDragging);
+      currentDragging = 0;
+    } else {
+      circles[currentDragging].velocity = new Vector(0, 0);
+      stationaryPoints.add(currentDragging);
     }
+    return;
   }
+  dragging = true;
   circles[currentDragging].velocity = new Vector(0, 0);
 });
 
 canvas.on('mouseup', (e: MouseEvent) => {
-  dragging = false;
-  const p = new Vector(e.offsetX * canvas.ratio, e.offsetY * canvas.ratio);
-  const diff = p.sub(mousePos);
-  circles[currentDragging].velocity = diff.multiply(2);
-  currentDragging = 0;
+  if (dragging) {
+    dragging = false;
+    const p = new Vector(e.offsetX * canvas.ratio, e.offsetY * canvas.ratio);
+    const diff = p.sub(mousePos);
+    circles[currentDragging].velocity = diff.multiply(2);
+    currentDragging = 0;
+  }
 });
 
 let mousePos = new Vector(0, 0);
@@ -52,6 +100,15 @@ canvas.on('mousemove', (e: MouseEvent) => {
   mousePos = p;
 });
 
+let pressingShift = false;
+window.addEventListener('keydown', (e: KeyboardEvent) => {
+  if (e.key === 'Shift') pressingShift = true;
+});
+
+window.addEventListener('keyup', (e: KeyboardEvent) => {
+  if (e.key === 'Shift') pressingShift = false;
+});
+
 let prev = Date.now();
 frameLoop(() => {
   accelerateCircles(circles);
@@ -60,6 +117,16 @@ frameLoop(() => {
   }
   drawLines(circles);
 })();
+
+function getClosestPointIndex(p: Vector) {
+  let res = 0;
+  for (let i = 0; i < circles.length; i++) {
+    if (distance(circles[i].pos, p) < distance(circles[res].pos, p)) {
+      res = i;
+    }
+  }
+  return res;
+}
 
 function getForceBelow(index: number) {
   const weight = circles[index].mass * g;
@@ -88,7 +155,7 @@ function accelerateCircles(circles: PhysicsCircle[]) {
   const dx = clamp(now - prev, 0, 17);
   prev = now;
   for (let i = 0; i < circles.length; i++) {
-    if (i === 0 || i == currentDragging) continue;
+    if (stationaryPoints.has(i) || i == currentDragging) continue;
     const forceBelow = getForceBelow(i);
     const forceAbove = getForceAbove(i);
     const friction = 0.98;
