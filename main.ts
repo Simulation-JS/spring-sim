@@ -19,7 +19,7 @@ const springConstant = 3;
 const forceDampen = 20;
 let currentDragging = 0;
 
-const circles = generatePoints(new Vector(200, 200), 12, 0.5);
+const circles = generatePoints(new Vector(800, 250), 12, 0.5);
 for (let i = 0; i < circles.length; i++) canvas.add(circles[i]);
 
 let dragging = false;
