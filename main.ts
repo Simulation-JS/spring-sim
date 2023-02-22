@@ -15,8 +15,8 @@ class PhysicsCircle extends Circle {
 const g = 9.8;
 const fps = 60;
 const springLength = 80;
-const springConstant = 3;
-const forceDampen = 20;
+const springConstant = 4;
+const forceDampen = 12;
 let currentDragging = 0;
 
 const circles = generatePoints(new Vector(800, 250), 12, 0.5);
@@ -62,7 +62,6 @@ frameLoop(() => {
 })();
 
 function getForceBelow(index: number) {
-  // add more stuff
   const weight = circles[index].mass * g;
   if (index < circles.length - 1) {
     return springForceCircles(circles[index + 1], circles[index]).appendY(weight);
@@ -92,7 +91,7 @@ function accelerateCircles(circles: PhysicsCircle[]) {
     if (i === 0 || i == currentDragging) continue;
     const forceBelow = getForceBelow(i);
     const forceAbove = getForceAbove(i);
-    const friction = 0.97;
+    const friction = 0.98;
     const force = new Vector(forceBelow.x - forceAbove.x, forceBelow.y - forceAbove.y);
     force.divide(forceDampen);
     const accY = force.y / circles[i].mass / fps;
@@ -116,7 +115,7 @@ function drawLines(circles: PhysicsCircle[]) {
 
 function generatePoints(pos: Vector, num: number, mass: number) {
   let res: PhysicsCircle[] = [];
-  const radius = 10;
+  const radius = 6;
   const gap = 160;
   for (let i = 0; i < num; i++) {
     res.push(new PhysicsCircle(mass, new Vector(pos.x, i * gap + pos.y), radius));
