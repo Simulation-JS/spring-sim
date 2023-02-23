@@ -18,7 +18,7 @@ const forceDampen = 12;
 const circleGap = 120;
 const circleRadius = 6;
 const circleMass = 0.5;
-let g = 9.8;
+const g = 9.8;
 let springLength = 80;
 let springConstant = 4;
 let currentDragging = 0;
@@ -32,9 +32,6 @@ const updateFunctions = {
   updateSpringLength: (val: string) => {
     springLength = +val;
   },
-  updateGravity: (val: string) => {
-    g = +val;
-  },
   resetCircles: () => {
     stationaryPoints = new Set([0]);
     canvas.empty();
@@ -44,11 +41,7 @@ const updateFunctions = {
   updateNumCircles: (val: string) => {
     let num = +val;
     while (num > numCircles) {
-      const circle = new PhysicsCircle(
-        circleMass,
-        circles[circles.length - 1].pos.clone().appendY(circleGap),
-        circleRadius
-      );
+      const circle = new PhysicsCircle(circleMass, circles[circles.length - 1].pos.clone(), circleRadius);
       circles.push(circle);
       canvas.add(circle, uuid());
       numCircles++;
@@ -66,7 +59,6 @@ const updateFunctions = {
 const defaultValues = {
   k: springConstant,
   length: springLength,
-  g,
   numCircles
 };
 
@@ -155,22 +147,10 @@ function getClosestPointIndex(p: Vector) {
   return res;
 }
 
-function getForceBelow(index: number) {
-  const weight = circles[index].mass * g;
-  if (index < circles.length - 1) {
-    return springForceCircles(circles[index + 1], circles[index]).appendY(weight);
-  }
-  return new Vector(0, weight);
-}
-
 function springForceCircles(c1: PhysicsCircle, c2: PhysicsCircle) {
   const diff = new Vector(c1.pos.x - c2.pos.x, c1.pos.y - c2.pos.y);
   const force = new Vector(springConstant * diff.x, springConstant * (diff.y - springLength));
   return force;
-}
-
-function getForceAbove(index: number) {
-  return springForceCircles(circles[index], circles[index - 1]);
 }
 
 function clamp(val: number, min: number, max: number) {
@@ -183,11 +163,14 @@ function accelerateCircles(circles: PhysicsCircle[]) {
   prev = now;
   for (let i = 0; i < circles.length; i++) {
     if (stationaryPoints.has(i) || i == currentDragging) continue;
-    const forceBelow = getForceBelow(i);
-    const forceAbove = getForceAbove(i);
+    const weight = circles[i].mass * g;
+    const forceBelow =
+      i < circles.length - 1 ? springForceCircles(circles[i + 1], circles[i]) : new Vector(0, 0);
+    const forceAbove = springForceCircles(circles[i], circles[i - 1]);
     const friction = 0.98;
     const force = new Vector(forceBelow.x - forceAbove.x, forceBelow.y - forceAbove.y);
     force.divide(forceDampen);
+    force.appendY(weight);
     const accY = force.y / circles[i].mass / fps;
     const accX = force.x / circles[i].mass / fps;
     let vfy = circles[i].velocity.y + accY * dx;
