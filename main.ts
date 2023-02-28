@@ -36,22 +36,17 @@ const updateFunctions = {
     stationaryPoints = new Set([0]);
     canvas.empty();
     circles = generatePoints(new Vector(800, 250), numCircles);
-    for (let i = 0; i < circles.length; i++) canvas.add(circles[i], uuid());
   },
   updateNumCircles: (val: string) => {
     let num = +val;
     while (num > numCircles) {
       const circle = new PhysicsCircle(circleMass, circles[circles.length - 1].pos.clone(), circleRadius);
       circles.push(circle);
-      canvas.add(circle, uuid());
       numCircles++;
     }
     if (num < numCircles) {
       numCircles = num;
       const removed = circles.splice(numCircles);
-      for (const circle of removed) {
-        canvas.removeWithId(circle.id);
-      }
     }
   }
 };
@@ -78,7 +73,6 @@ function applyDefaultValues<T extends { [key: string]: number }>(vals: T) {
 }
 
 let circles = generatePoints(new Vector(800, 250), numCircles);
-for (let i = 0; i < circles.length; i++) canvas.add(circles[i], uuid());
 
 let dragging = false;
 canvas.on('mousedown', (e: MouseEvent) => {
@@ -131,11 +125,19 @@ window.addEventListener('keyup', (e: KeyboardEvent) => {
 let prev = Date.now();
 frameLoop(() => {
   accelerateCircles(circles);
-  for (let i = 0; i < circles.length; i++) {
-    circles[i].move(circles[i].velocity);
-  }
+  circles.forEach((circle) => {
+    circle.move(circle.velocity);
+  });
   drawLines(circles);
+  drawCircles(circles);
 })();
+
+function drawCircles(circles: PhysicsCircle[]) {
+  circles.forEach((circle) => {
+    if (!canvas.ctx) return;
+    circle.draw(canvas.ctx);
+  });
+}
 
 function getClosestPointIndex(p: Vector) {
   let res = 0;
