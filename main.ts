@@ -1,6 +1,12 @@
 import { Simulation, Circle, Vector, Line, Color, frameLoop, distance } from 'simulationjs';
 import { v4 as uuid } from 'uuid';
 
+declare global {
+  interface Window {
+    g: number;
+  }
+}
+
 const canvas = new Simulation('canvas');
 canvas.fitElement();
 
@@ -18,7 +24,7 @@ const forceDampen = 12;
 const circleGap = 120;
 const circleRadius = 6;
 const circleMass = 0.5;
-const g = 9.8;
+window.g = 9.8;
 let springLength = 80;
 let springConstant = 4;
 let currentDragging = 0;
@@ -165,7 +171,7 @@ function accelerateCircles(circles: PhysicsCircle[]) {
   prev = now;
   for (let i = 0; i < circles.length; i++) {
     if (stationaryPoints.has(i) || i == currentDragging) continue;
-    const weight = circles[i].mass * g;
+    const weight = circles[i].mass * window.window.g;
     const forceBelow =
       i < circles.length - 1 ? springForceCircles(circles[i + 1], circles[i]) : new Vector(0, 0);
     const forceAbove = springForceCircles(circles[i], circles[i - 1]);
